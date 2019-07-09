@@ -19,6 +19,8 @@ generate_client: &generate_client
       RESULT=$(curl -X POST --header 'Content-Type: application/json' --header 'Accept: application/json' -d '{"swaggerUrl":"https://www.bitmex.com/api/explorer/swagger.json"}' 'http://localhost:8080/api/gen/servers/haskell' | jq '.link' | tr -d '"')
       curl $RESULT > build/result.zip
       unzip -jo build/result.zip
+      mv API.hs ./lib/BitMEX
+      mv Types.hs ./lib/BitMEX
 
 create_pr: &create_pr
   run:

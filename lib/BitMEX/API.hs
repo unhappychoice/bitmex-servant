@@ -540,75 +540,75 @@ formatSeparatedQueryList char = T.intercalate (T.singleton char) . map toQueryPa
 -- is a backend that executes actions by sending HTTP requests (see @createBitMEXClient@). Alternatively, provided
 -- a backend, the API can be served using @runBitMEXServer@.
 data BitMEXBackend m = BitMEXBackend
-  { aPIKey.disable :: FormAPIKeyDisable -> m APIKey{- ^  -}
-  , aPIKey.enable :: FormAPIKeyEnable -> m APIKey{- ^  -}
-  , aPIKey.get :: Maybe Bool -> m [APIKey]{- ^  -}
-  , aPIKey.new :: FormAPIKeyNew -> m APIKey{- ^ API Keys can only be created via the frontend. -}
-  , aPIKey.remove :: FormAPIKeyRemove -> m Inline_response_200{- ^  -}
-  , announcement.get :: Maybe Text -> m [Announcement]{- ^  -}
-  , announcement.getUrgent :: m [Announcement]{- ^  -}
-  , chat.get :: Maybe Double -> Maybe Double -> Maybe Bool -> Maybe Double -> m [Chat]{- ^  -}
-  , chat.getChannels :: m [ChatChannel]{- ^  -}
-  , chat.getConnected :: m ConnectedUsers{- ^ Returns an array with browser users in the first position and API users (bots) in the second position. -}
-  , chat.new :: FormChatNew -> m Chat{- ^  -}
-  , execution.get :: Maybe Text -> Maybe Text -> Maybe Text -> Maybe Double -> Maybe Double -> Maybe Bool -> Maybe Integer -> Maybe Integer -> m [Execution]{- ^ This returns all raw transactions, which includes order opening and cancelation, and order status changes. It can be quite noisy. More focused information is available at `/execution/tradeHistory`.  You may also use the `filter` param to target your query. Specify an array as a filter value, such as `{\"execType\": [\"Settlement\", \"Trade\"]}` to filter on multiple values.  See [the FIX Spec](http://www.onixs.biz/fix-dictionary/5.0.SP2/msgType_8_8.html) for explanations of these fields.  -}
-  , execution.getTradeHistory :: Maybe Text -> Maybe Text -> Maybe Text -> Maybe Double -> Maybe Double -> Maybe Bool -> Maybe Integer -> Maybe Integer -> m [Execution]{- ^  -}
-  , funding.get :: Maybe Text -> Maybe Text -> Maybe Text -> Maybe Double -> Maybe Double -> Maybe Bool -> Maybe Integer -> Maybe Integer -> m [Funding]{- ^  -}
-  , globalNotification.get :: m [GlobalNotification]{- ^ This is an upcoming feature and currently does not return data. -}
-  , instrument.get :: Maybe Text -> Maybe Text -> Maybe Text -> Maybe Double -> Maybe Double -> Maybe Bool -> Maybe Integer -> Maybe Integer -> m [Instrument]{- ^ This returns all instruments and indices, including those that have settled or are unlisted. Use this endpoint if you want to query for individual instruments or use a complex filter. Use `/instrument/active` to return active instruments, or use a filter like `{\"state\": \"Open\"}`. -}
-  , instrument.getActive :: m [Instrument]{- ^  -}
-  , instrument.getActiveAndIndices :: m [Instrument]{- ^  -}
-  , instrument.getActiveIntervals :: m InstrumentInterval{- ^ This endpoint is useful for determining which pairs are live. It returns two arrays of   strings. The first is intervals, such as `[\"XBT:perpetual\", \"XBT:monthly\", \"XBT:quarterly\", \"ETH:monthly\", ...]`. These identifiers are usable in any query's `symbol` param. The second array is the current resolution of these intervals. Results are mapped at the same index. -}
-  , instrument.getCompositeIndex :: Maybe Text -> Maybe Text -> Maybe Text -> Maybe Double -> Maybe Double -> Maybe Bool -> Maybe Integer -> Maybe Integer -> m [IndexComposite]{- ^ Composite indices are built from multiple external price sources.  Use this endpoint to get the underlying prices of an index. For example, send a `symbol` of `.XBT` to get the ticks and weights of the constituent exchanges that build the \".XBT\" index.  A tick with reference `\"BMI\"` and weight `null` is the composite index tick.  -}
-  , instrument.getIndices :: m [Instrument]{- ^  -}
-  , insurance.get :: Maybe Text -> Maybe Text -> Maybe Text -> Maybe Double -> Maybe Double -> Maybe Bool -> Maybe Integer -> Maybe Integer -> m [Insurance]{- ^  -}
-  , leaderboard.get :: Maybe Text -> m [Leaderboard]{- ^  -}
-  , leaderboard.getName :: m Inline_response_200_1{- ^  -}
-  , liquidation.get :: Maybe Text -> Maybe Text -> Maybe Text -> Maybe Double -> Maybe Double -> Maybe Bool -> Maybe Integer -> Maybe Integer -> m [Liquidation]{- ^  -}
-  , order.amend :: FormOrderAmend -> m Order{- ^ Send an `orderID` or `origClOrdID` to identify the order you wish to amend.  Both order quantity and price can be amended. Only one `qty` field can be used to amend.  Use the `leavesQty` field to specify how much of the order you wish to remain open. This can be useful if you want to adjust your position's delta by a certain amount, regardless of how much of the order has already filled.  > A `leavesQty` can be used to make a \"Filled\" order live again, if it is received within 60 seconds of the fill.  Like order placement, amending can be done in bulk. Simply send a request to `PUT /api/v1/order/bulk` with a JSON body of the shape: `{\"orders\": [{...}, {...}]}`, each object containing the fields used in this endpoint.  -}
-  , order.amendBulk :: FormOrderAmendBulk -> m [Order]{- ^ Similar to POST /amend, but with multiple orders. `application/json` only. Ratelimited at 10%. -}
-  , order.cancel :: FormOrderCancel -> m [Order]{- ^ Either an orderID or a clOrdID must be provided. -}
-  , order.cancelAll :: FormOrderCancelAll -> m [Order]{- ^  -}
-  , order.cancelAllAfter :: FormOrderCancelAllAfter -> m Value{- ^ Useful as a dead-man's switch to ensure your orders are canceled in case of an outage. If called repeatedly, the existing offset will be canceled and a new one will be inserted in its place.  Example usage: call this route at 15s intervals with an offset of 60000 (60s). If this route is not called within 60 seconds, all your orders will be automatically canceled.  This is also available via [WebSocket](https://www.bitmex.com/app/wsAPI#Dead-Mans-Switch-Auto-Cancel).  -}
-  , order.closePosition :: FormOrderClosePosition -> m Order{- ^ If no `price` is specified, a market order will be submitted to close the whole of your position. This will also close all other open orders in this symbol. -}
-  , order.getOrders :: Maybe Text -> Maybe Text -> Maybe Text -> Maybe Double -> Maybe Double -> Maybe Bool -> Maybe Integer -> Maybe Integer -> m [Order]{- ^ To get open orders only, send {\"open\": true} in the filter param.  See <a href=\"http://www.onixs.biz/fix-dictionary/5.0.SP2/msgType_D_68.html\">the FIX Spec</a> for explanations of these fields. -}
-  , order.new :: FormOrderNew -> m Order{- ^ ## Placing Orders  This endpoint is used for placing orders. See individual fields below for more details on their use.  #### Order Types  All orders require a `symbol`. All other fields are optional except when otherwise specified.  These are the valid `ordType`s:  * **Limit**: The default order type. Specify an `orderQty` and `price`. * **Market**: A traditional Market order. A Market order will execute until filled or your bankruptcy price is reached, at   which point it will cancel. * **Stop**: A Stop Market order. Specify an `orderQty` and `stopPx`. When the `stopPx` is reached, the order will be entered   into the book.   * On sell orders, the order will trigger if the triggering price is lower than the `stopPx`. On buys, higher.   * Note: Stop orders do not consume margin until triggered. Be sure that the required margin is available in your     account so that it may trigger fully.   * `Close` Stops don't require an `orderQty`. See Execution Instructions below. * **StopLimit**: Like a Stop Market, but enters a Limit order instead of a Market order. Specify an `orderQty`, `stopPx`,   and `price`. * **MarketIfTouched**: Similar to a Stop, but triggers are done in the opposite direction. Useful for Take Profit orders. * **LimitIfTouched**: As above; use for Take Profit Limit orders.  #### Execution Instructions  The following `execInst`s are supported. If using multiple, separate with a comma (e.g. `LastPrice,Close`).  * **ParticipateDoNotInitiate**: Also known as a Post-Only order. If this order would have executed on placement,   it will cancel instead. * **MarkPrice, LastPrice, IndexPrice**: Used by stop and if-touched orders to determine the triggering price.   Use only one. By default, `'MarkPrice'` is used. Also used for Pegged orders to define the value of `'LastPeg'`. * **ReduceOnly**: A `'ReduceOnly'` order can only reduce your position, not increase it. If you have a `'ReduceOnly'`   limit order that rests in the order book while the position is reduced by other orders, then its order quantity will   be amended down or canceled. If there are multiple `'ReduceOnly'` orders the least aggressive will be amended first. * **Close**: `'Close'` implies `'ReduceOnly'`. A `'Close'` order will cancel other active limit orders with the same side   and symbol if the open quantity exceeds the current position. This is useful for stops: by canceling these orders, a   `'Close'` Stop is ensured to have the margin required to execute, and can only execute up to the full size of your   position. If `orderQty` is not specified, a `'Close'` order has an `orderQty` equal to your current position's size.   * Note that a `Close` order without an `orderQty` requires a `side`, so that BitMEX knows if it should trigger   above or below the `stopPx`.  #### Linked Orders  [Linked Orders are deprecated as of 2018/11/10](https://blog.bitmex.com/api_announcement/deprecation-of-contingent-orders/)  #### Trailing Stops  You may use `pegPriceType` of `'TrailingStopPeg'` to create Trailing Stops. The pegged `stopPx` will move as the market moves away from the peg, and freeze as the market moves toward it.  To use, combine with `pegOffsetValue` to set the `stopPx` of your order. The peg is set to the triggering price specified in the `execInst` (default `'MarkPrice'`). Use a negative offset for stop-sell and buy-if-touched orders.  Requires `ordType`: `'Stop', 'StopLimit', 'MarketIfTouched', 'LimitIfTouched'`.  #### Simple Quantities  [Simple Quantities are deprecated as of 2018/10/26](https://blog.bitmex.com/api_announcement/deprecation-of-simpleorderqty-functionality/)  #### Rate Limits  See the [Bulk Order Documentation](#!/Order/Order_newBulk) if you need to place multiple orders at the same time. Bulk orders require fewer risk checks in the trading engine and thus are ratelimited at **1/10** the normal rate.  You can also improve your reactivity to market movements while staying under your ratelimit by using the [Amend](#!/Order/Order_amend) and [Amend Bulk](#!/Order/Order_amendBulk) endpoints. This allows you to stay in the market and avoids the cancel/replace cycle.  #### Tracking Your Orders  If you want to keep track of order IDs yourself, set a unique `clOrdID` per order. This `clOrdID` will come back as a property on the order and any related executions (including on the WebSocket), and can be used to get or cancel the order. Max length is 36 characters.  You can also change the `clOrdID` by amending an order, supplying an `origClOrdID`, and your desired new ID as the `clOrdID` param, like so:  ``` # Amends an order's leavesQty, and updates its clOrdID to \"def-456\" PUT /api/v1/order {\"origClOrdID\": \"abc-123\", \"clOrdID\": \"def-456\", \"leavesQty\": 1000} ```  -}
-  , order.newBulk :: FormOrderNewBulk -> m [Order]{- ^ This endpoint is used for placing bulk orders. Valid order types are Market, Limit, Stop, StopLimit, MarketIfTouched, LimitIfTouched, and Pegged.  Each individual order object in the array should have the same properties as an individual POST /order call.  This endpoint is much faster for getting many orders into the book at once. Because it reduces load on BitMEX systems, this endpoint is ratelimited at `ceil(0.1 * orders)`. Submitting 10 orders via a bulk order call will only count as 1 request, 15 as 2, 32 as 4, and so on.  For now, only `application/json` is supported on this endpoint.  -}
-  , orderBook.getL2 :: Maybe Text -> Maybe Double -> m [OrderBookL2]{- ^  -}
-  , position.get :: Maybe Text -> Maybe Text -> Maybe Double -> m [Position]{- ^ This endpoint is used for retrieving position information. The fields largely follow the [FIX spec](http://www.onixs.biz/fix-dictionary/5.0.SP2/msgType_AP_6580.html) definitions. Some selected fields are explained in more detail below.  The fields _account_, _symbol_, _currency_ are unique to each position and form its key.  * **account**: Your unique account ID. * **symbol**: The contract for this position. * **currency**: The margin currency for this position. * **underlying**: Meta data of the _symbol_. * **quoteCurrency**: Meta data of the _symbol_,  All prices are in the _quoteCurrency_ * **commission**: The maximum of the maker, taker, and settlement fee. * **initMarginReq**: The initial margin requirement.  This will be at least the symbol's default initial maintenance margin, but can be higher if you choose lower leverage. * **maintMarginReq**: The maintenance margin requirement.  This will be at least the symbol's default maintenance maintenance margin, but can be higher if you choose a higher risk limit. * **riskLimit**: This is a function of your _maintMarginReq_. * **leverage**: 1 / initMarginReq. * **crossMargin**: True/false depending on whether you set cross margin on this position. * **deleveragePercentile**: Indicates where your position is in the ADL queue. * **rebalancedPnl**: The value of realised PNL that has transferred to your wallet for this position. * **prevRealisedPnl**: The value of realised PNL that has transferred to your wallet for this position since the position was closed. * **currentQty**: The current position amount in contracts. * **currentCost**: The current cost of the position in the settlement currency of the symbol (_currency_). * **currentComm**: The current commission of the position in the settlement currency of the symbol (_currency_). * **realisedCost**: The realised cost of this position calculated with regard to average cost accounting. * **unrealisedCost**: _currentCost_ - _realisedCost_. * **grossOpenCost**: The absolute value of your open orders for this symbol. * **grossOpenPremium**: The amount your bidding above the mark price in the settlement currency of the symbol (_currency_). * **markPrice**: The mark price of the symbol in _quoteCurrency_. * **markValue**: The _currentQty_ at the mark price in the settlement currency of the symbol (_currency_). * **homeNotional**: Value of position in units of _underlying_. * **foreignNotional**: Value of position in units of _quoteCurrency_. * **realisedPnl**: The negative of _realisedCost_. * **unrealisedGrossPnl**: _markValue_ - _unrealisedCost_. * **unrealisedPnl**: _unrealisedGrossPnl_. * **liquidationPrice**: Once markPrice reaches this price, this position will be liquidated. * **bankruptPrice**: Once markPrice reaches this price, this position will have no equity.  -}
-  , position.isolateMargin :: FormPositionIsolateMargin -> m Position{- ^  -}
-  , position.transferIsolatedMargin :: FormPositionTransferIsolatedMargin -> m Position{- ^  -}
-  , position.updateLeverage :: FormPositionUpdateLeverage -> m Position{- ^  -}
-  , position.updateRiskLimit :: FormPositionUpdateRiskLimit -> m Position{- ^  -}
-  , quote.get :: Maybe Text -> Maybe Text -> Maybe Text -> Maybe Double -> Maybe Double -> Maybe Bool -> Maybe Integer -> Maybe Integer -> m [Quote]{- ^  -}
-  , quote.getBucketed :: Maybe Text -> Maybe Bool -> Maybe Text -> Maybe Text -> Maybe Text -> Maybe Double -> Maybe Double -> Maybe Bool -> Maybe Integer -> Maybe Integer -> m [Quote]{- ^ Timestamps returned by our bucketed endpoints are the **end** of the period, indicating when the bucket was written to disk. Some other common systems use the timestamp as the beginning of the period. Please be aware of this when using this endpoint. -}
-  , schema.get :: Maybe Text -> m Value{- ^  -}
-  , schema.websocketHelp :: m Value{- ^  -}
-  , settlement.get :: Maybe Text -> Maybe Text -> Maybe Text -> Maybe Double -> Maybe Double -> Maybe Bool -> Maybe Integer -> Maybe Integer -> m [Settlement]{- ^  -}
-  , stats.get :: m [Stats]{- ^  -}
-  , stats.history :: m [StatsHistory]{- ^  -}
-  , stats.historyUSD :: m [StatsUSD]{- ^  -}
-  , trade.get :: Maybe Text -> Maybe Text -> Maybe Text -> Maybe Double -> Maybe Double -> Maybe Bool -> Maybe Integer -> Maybe Integer -> m [Trade]{- ^ Please note that indices (symbols starting with `.`) post trades at intervals to the trade feed. These have a `size` of 0 and are used only to indicate a changing price.  See [the FIX Spec](http://www.onixs.biz/fix-dictionary/5.0.SP2/msgType_AE_6569.html) for explanations of these fields. -}
-  , trade.getBucketed :: Maybe Text -> Maybe Bool -> Maybe Text -> Maybe Text -> Maybe Text -> Maybe Double -> Maybe Double -> Maybe Bool -> Maybe Integer -> Maybe Integer -> m [TradeBin]{- ^ Timestamps returned by our bucketed endpoints are the **end** of the period, indicating when the bucket was written to disk. Some other common systems use the timestamp as the beginning of the period. Please be aware of this when using this endpoint.  Also note the `open` price is equal to the `close` price of the previous timeframe bucket. -}
-  , user.cancelWithdrawal :: FormUserCancelWithdrawal -> m Transaction{- ^  -}
-  , user.checkReferralCode :: Maybe Text -> m Double{- ^ If the code is valid, responds with the referral code's discount (e.g. `0.1` for 10%). Otherwise, will return a 404 or 451 if invalid. -}
-  , user.communicationToken :: FormUserCommunicationToken -> m [CommunicationToken]{- ^  -}
-  , user.confirm :: FormUserConfirm -> m AccessToken{- ^  -}
-  , user.confirmWithdrawal :: FormUserConfirmWithdrawal -> m Transaction{- ^  -}
-  , user.get :: m User{- ^  -}
-  , user.getAffiliateStatus :: m Affiliate{- ^  -}
-  , user.getCommission :: m UserCommissionsBySymbol{- ^  -}
-  , user.getDepositAddress :: Maybe Text -> m Text{- ^  -}
-  , user.getExecutionHistory :: Maybe Text -> Maybe Integer -> m Value{- ^  -}
-  , user.getMargin :: Maybe Text -> m Margin{- ^  -}
-  , user.getWallet :: Maybe Text -> m Wallet{- ^  -}
-  , user.getWalletHistory :: Maybe Text -> Maybe Double -> Maybe Double -> m [Transaction]{- ^  -}
-  , user.getWalletSummary :: Maybe Text -> m [Transaction]{- ^  -}
-  , user.logout :: m (){- ^  -}
-  , user.minWithdrawalFee :: Maybe Text -> m Value{- ^ This is changed based on network conditions to ensure timely withdrawals. During network congestion, this may be high. The fee is returned in the same currency. -}
-  , user.requestWithdrawal :: FormUserRequestWithdrawal -> m Transaction{- ^ This will send a confirmation email to the email address on record. -}
-  , user.savePreferences :: FormUserSavePreferences -> m User{- ^  -}
-  , userEvent.get :: Maybe Double -> Maybe Double -> m [UserEvent]{- ^  -}
+  { aPIKeyDisable :: FormAPIKeyDisable -> m APIKey{- ^  -}
+  , aPIKeyEnable :: FormAPIKeyEnable -> m APIKey{- ^  -}
+  , aPIKeyGet :: Maybe Bool -> m [APIKey]{- ^  -}
+  , aPIKeyNew :: FormAPIKeyNew -> m APIKey{- ^ API Keys can only be created via the frontend. -}
+  , aPIKeyRemove :: FormAPIKeyRemove -> m Inline_response_200{- ^  -}
+  , announcementGet :: Maybe Text -> m [Announcement]{- ^  -}
+  , announcementGetUrgent :: m [Announcement]{- ^  -}
+  , chatGet :: Maybe Double -> Maybe Double -> Maybe Bool -> Maybe Double -> m [Chat]{- ^  -}
+  , chatGetChannels :: m [ChatChannel]{- ^  -}
+  , chatGetConnected :: m ConnectedUsers{- ^ Returns an array with browser users in the first position and API users (bots) in the second position. -}
+  , chatNew :: FormChatNew -> m Chat{- ^  -}
+  , executionGet :: Maybe Text -> Maybe Text -> Maybe Text -> Maybe Double -> Maybe Double -> Maybe Bool -> Maybe Integer -> Maybe Integer -> m [Execution]{- ^ This returns all raw transactions, which includes order opening and cancelation, and order status changes. It can be quite noisy. More focused information is available at `/execution/tradeHistory`.  You may also use the `filter` param to target your query. Specify an array as a filter value, such as `{\"execType\": [\"Settlement\", \"Trade\"]}` to filter on multiple values.  See [the FIX Spec](http://www.onixs.biz/fix-dictionary/5.0.SP2/msgType_8_8.html) for explanations of these fields.  -}
+  , executionGetTradeHistory :: Maybe Text -> Maybe Text -> Maybe Text -> Maybe Double -> Maybe Double -> Maybe Bool -> Maybe Integer -> Maybe Integer -> m [Execution]{- ^  -}
+  , fundingGet :: Maybe Text -> Maybe Text -> Maybe Text -> Maybe Double -> Maybe Double -> Maybe Bool -> Maybe Integer -> Maybe Integer -> m [Funding]{- ^  -}
+  , globalNotificationGet :: m [GlobalNotification]{- ^ This is an upcoming feature and currently does not return data. -}
+  , instrumentGet :: Maybe Text -> Maybe Text -> Maybe Text -> Maybe Double -> Maybe Double -> Maybe Bool -> Maybe Integer -> Maybe Integer -> m [Instrument]{- ^ This returns all instruments and indices, including those that have settled or are unlisted. Use this endpoint if you want to query for individual instruments or use a complex filter. Use `/instrument/active` to return active instruments, or use a filter like `{\"state\": \"Open\"}`. -}
+  , instrumentGetActive :: m [Instrument]{- ^  -}
+  , instrumentGetActiveAndIndices :: m [Instrument]{- ^  -}
+  , instrumentGetActiveIntervals :: m InstrumentInterval{- ^ This endpoint is useful for determining which pairs are live. It returns two arrays of   strings. The first is intervals, such as `[\"XBT:perpetual\", \"XBT:monthly\", \"XBT:quarterly\", \"ETH:monthly\", ...]`. These identifiers are usable in any query's `symbol` param. The second array is the current resolution of these intervals. Results are mapped at the same index. -}
+  , instrumentGetCompositeIndex :: Maybe Text -> Maybe Text -> Maybe Text -> Maybe Double -> Maybe Double -> Maybe Bool -> Maybe Integer -> Maybe Integer -> m [IndexComposite]{- ^ Composite indices are built from multiple external price sources.  Use this endpoint to get the underlying prices of an index. For example, send a `symbol` of `.XBT` to get the ticks and weights of the constituent exchanges that build the \".XBT\" index.  A tick with reference `\"BMI\"` and weight `null` is the composite index tick.  -}
+  , instrumentGetIndices :: m [Instrument]{- ^  -}
+  , insuranceGet :: Maybe Text -> Maybe Text -> Maybe Text -> Maybe Double -> Maybe Double -> Maybe Bool -> Maybe Integer -> Maybe Integer -> m [Insurance]{- ^  -}
+  , leaderboardGet :: Maybe Text -> m [Leaderboard]{- ^  -}
+  , leaderboardGetName :: m Inline_response_200_1{- ^  -}
+  , liquidationGet :: Maybe Text -> Maybe Text -> Maybe Text -> Maybe Double -> Maybe Double -> Maybe Bool -> Maybe Integer -> Maybe Integer -> m [Liquidation]{- ^  -}
+  , orderAmend :: FormOrderAmend -> m Order{- ^ Send an `orderID` or `origClOrdID` to identify the order you wish to amend.  Both order quantity and price can be amended. Only one `qty` field can be used to amend.  Use the `leavesQty` field to specify how much of the order you wish to remain open. This can be useful if you want to adjust your position's delta by a certain amount, regardless of how much of the order has already filled.  > A `leavesQty` can be used to make a \"Filled\" order live again, if it is received within 60 seconds of the fill.  Like order placement, amending can be done in bulk. Simply send a request to `PUT /api/v1/order/bulk` with a JSON body of the shape: `{\"orders\": [{...}, {...}]}`, each object containing the fields used in this endpoint.  -}
+  , orderAmendBulk :: FormOrderAmendBulk -> m [Order]{- ^ Similar to POST /amend, but with multiple orders. `application/json` only. Ratelimited at 10%. -}
+  , orderCancel :: FormOrderCancel -> m [Order]{- ^ Either an orderID or a clOrdID must be provided. -}
+  , orderCancelAll :: FormOrderCancelAll -> m [Order]{- ^  -}
+  , orderCancelAllAfter :: FormOrderCancelAllAfter -> m Value{- ^ Useful as a dead-man's switch to ensure your orders are canceled in case of an outage. If called repeatedly, the existing offset will be canceled and a new one will be inserted in its place.  Example usage: call this route at 15s intervals with an offset of 60000 (60s). If this route is not called within 60 seconds, all your orders will be automatically canceled.  This is also available via [WebSocket](https://www.bitmex.com/app/wsAPI#Dead-Mans-Switch-Auto-Cancel).  -}
+  , orderClosePosition :: FormOrderClosePosition -> m Order{- ^ If no `price` is specified, a market order will be submitted to close the whole of your position. This will also close all other open orders in this symbol. -}
+  , orderGetOrders :: Maybe Text -> Maybe Text -> Maybe Text -> Maybe Double -> Maybe Double -> Maybe Bool -> Maybe Integer -> Maybe Integer -> m [Order]{- ^ To get open orders only, send {\"open\": true} in the filter param.  See <a href=\"http://www.onixs.biz/fix-dictionary/5.0.SP2/msgType_D_68.html\">the FIX Spec</a> for explanations of these fields. -}
+  , orderNew :: FormOrderNew -> m Order{- ^ ## Placing Orders  This endpoint is used for placing orders. See individual fields below for more details on their use.  #### Order Types  All orders require a `symbol`. All other fields are optional except when otherwise specified.  These are the valid `ordType`s:  * **Limit**: The default order type. Specify an `orderQty` and `price`. * **Market**: A traditional Market order. A Market order will execute until filled or your bankruptcy price is reached, at   which point it will cancel. * **Stop**: A Stop Market order. Specify an `orderQty` and `stopPx`. When the `stopPx` is reached, the order will be entered   into the book.   * On sell orders, the order will trigger if the triggering price is lower than the `stopPx`. On buys, higher.   * Note: Stop orders do not consume margin until triggered. Be sure that the required margin is available in your     account so that it may trigger fully.   * `Close` Stops don't require an `orderQty`. See Execution Instructions below. * **StopLimit**: Like a Stop Market, but enters a Limit order instead of a Market order. Specify an `orderQty`, `stopPx`,   and `price`. * **MarketIfTouched**: Similar to a Stop, but triggers are done in the opposite direction. Useful for Take Profit orders. * **LimitIfTouched**: As above; use for Take Profit Limit orders.  #### Execution Instructions  The following `execInst`s are supported. If using multiple, separate with a comma (e.g. `LastPrice,Close`).  * **ParticipateDoNotInitiate**: Also known as a Post-Only order. If this order would have executed on placement,   it will cancel instead. * **MarkPrice, LastPrice, IndexPrice**: Used by stop and if-touched orders to determine the triggering price.   Use only one. By default, `'MarkPrice'` is used. Also used for Pegged orders to define the value of `'LastPeg'`. * **ReduceOnly**: A `'ReduceOnly'` order can only reduce your position, not increase it. If you have a `'ReduceOnly'`   limit order that rests in the order book while the position is reduced by other orders, then its order quantity will   be amended down or canceled. If there are multiple `'ReduceOnly'` orders the least aggressive will be amended first. * **Close**: `'Close'` implies `'ReduceOnly'`. A `'Close'` order will cancel other active limit orders with the same side   and symbol if the open quantity exceeds the current position. This is useful for stops: by canceling these orders, a   `'Close'` Stop is ensured to have the margin required to execute, and can only execute up to the full size of your   position. If `orderQty` is not specified, a `'Close'` order has an `orderQty` equal to your current position's size.   * Note that a `Close` order without an `orderQty` requires a `side`, so that BitMEX knows if it should trigger   above or below the `stopPx`.  #### Linked Orders  [Linked Orders are deprecated as of 2018/11/10](https://blog.bitmex.com/api_announcement/deprecation-of-contingent-orders/)  #### Trailing Stops  You may use `pegPriceType` of `'TrailingStopPeg'` to create Trailing Stops. The pegged `stopPx` will move as the market moves away from the peg, and freeze as the market moves toward it.  To use, combine with `pegOffsetValue` to set the `stopPx` of your order. The peg is set to the triggering price specified in the `execInst` (default `'MarkPrice'`). Use a negative offset for stop-sell and buy-if-touched orders.  Requires `ordType`: `'Stop', 'StopLimit', 'MarketIfTouched', 'LimitIfTouched'`.  #### Simple Quantities  [Simple Quantities are deprecated as of 2018/10/26](https://blog.bitmex.com/api_announcement/deprecation-of-simpleorderqty-functionality/)  #### Rate Limits  See the [Bulk Order Documentation](#!/Order/Order_newBulk) if you need to place multiple orders at the same time. Bulk orders require fewer risk checks in the trading engine and thus are ratelimited at **1/10** the normal rate.  You can also improve your reactivity to market movements while staying under your ratelimit by using the [Amend](#!/Order/Order_amend) and [Amend Bulk](#!/Order/Order_amendBulk) endpoints. This allows you to stay in the market and avoids the cancel/replace cycle.  #### Tracking Your Orders  If you want to keep track of order IDs yourself, set a unique `clOrdID` per order. This `clOrdID` will come back as a property on the order and any related executions (including on the WebSocket), and can be used to get or cancel the order. Max length is 36 characters.  You can also change the `clOrdID` by amending an order, supplying an `origClOrdID`, and your desired new ID as the `clOrdID` param, like so:  ``` # Amends an order's leavesQty, and updates its clOrdID to \"def-456\" PUT /api/v1/order {\"origClOrdID\": \"abc-123\", \"clOrdID\": \"def-456\", \"leavesQty\": 1000} ```  -}
+  , orderNewBulk :: FormOrderNewBulk -> m [Order]{- ^ This endpoint is used for placing bulk orders. Valid order types are Market, Limit, Stop, StopLimit, MarketIfTouched, LimitIfTouched, and Pegged.  Each individual order object in the array should have the same properties as an individual POST /order call.  This endpoint is much faster for getting many orders into the book at once. Because it reduces load on BitMEX systems, this endpoint is ratelimited at `ceil(0.1 * orders)`. Submitting 10 orders via a bulk order call will only count as 1 request, 15 as 2, 32 as 4, and so on.  For now, only `application/json` is supported on this endpoint.  -}
+  , orderBookGetL2 :: Maybe Text -> Maybe Double -> m [OrderBookL2]{- ^  -}
+  , positionGet :: Maybe Text -> Maybe Text -> Maybe Double -> m [Position]{- ^ This endpoint is used for retrieving position information. The fields largely follow the [FIX spec](http://www.onixs.biz/fix-dictionary/5.0.SP2/msgType_AP_6580.html) definitions. Some selected fields are explained in more detail below.  The fields _account_, _symbol_, _currency_ are unique to each position and form its key.  * **account**: Your unique account ID. * **symbol**: The contract for this position. * **currency**: The margin currency for this position. * **underlying**: Meta data of the _symbol_. * **quoteCurrency**: Meta data of the _symbol_,  All prices are in the _quoteCurrency_ * **commission**: The maximum of the maker, taker, and settlement fee. * **initMarginReq**: The initial margin requirement.  This will be at least the symbol's default initial maintenance margin, but can be higher if you choose lower leverage. * **maintMarginReq**: The maintenance margin requirement.  This will be at least the symbol's default maintenance maintenance margin, but can be higher if you choose a higher risk limit. * **riskLimit**: This is a function of your _maintMarginReq_. * **leverage**: 1 / initMarginReq. * **crossMargin**: True/false depending on whether you set cross margin on this position. * **deleveragePercentile**: Indicates where your position is in the ADL queue. * **rebalancedPnl**: The value of realised PNL that has transferred to your wallet for this position. * **prevRealisedPnl**: The value of realised PNL that has transferred to your wallet for this position since the position was closed. * **currentQty**: The current position amount in contracts. * **currentCost**: The current cost of the position in the settlement currency of the symbol (_currency_). * **currentComm**: The current commission of the position in the settlement currency of the symbol (_currency_). * **realisedCost**: The realised cost of this position calculated with regard to average cost accounting. * **unrealisedCost**: _currentCost_ - _realisedCost_. * **grossOpenCost**: The absolute value of your open orders for this symbol. * **grossOpenPremium**: The amount your bidding above the mark price in the settlement currency of the symbol (_currency_). * **markPrice**: The mark price of the symbol in _quoteCurrency_. * **markValue**: The _currentQty_ at the mark price in the settlement currency of the symbol (_currency_). * **homeNotional**: Value of position in units of _underlying_. * **foreignNotional**: Value of position in units of _quoteCurrency_. * **realisedPnl**: The negative of _realisedCost_. * **unrealisedGrossPnl**: _markValue_ - _unrealisedCost_. * **unrealisedPnl**: _unrealisedGrossPnl_. * **liquidationPrice**: Once markPrice reaches this price, this position will be liquidated. * **bankruptPrice**: Once markPrice reaches this price, this position will have no equity.  -}
+  , positionIsolateMargin :: FormPositionIsolateMargin -> m Position{- ^  -}
+  , positionTransferIsolatedMargin :: FormPositionTransferIsolatedMargin -> m Position{- ^  -}
+  , positionUpdateLeverage :: FormPositionUpdateLeverage -> m Position{- ^  -}
+  , positionUpdateRiskLimit :: FormPositionUpdateRiskLimit -> m Position{- ^  -}
+  , quoteGet :: Maybe Text -> Maybe Text -> Maybe Text -> Maybe Double -> Maybe Double -> Maybe Bool -> Maybe Integer -> Maybe Integer -> m [Quote]{- ^  -}
+  , quoteGetBucketed :: Maybe Text -> Maybe Bool -> Maybe Text -> Maybe Text -> Maybe Text -> Maybe Double -> Maybe Double -> Maybe Bool -> Maybe Integer -> Maybe Integer -> m [Quote]{- ^ Timestamps returned by our bucketed endpoints are the **end** of the period, indicating when the bucket was written to disk. Some other common systems use the timestamp as the beginning of the period. Please be aware of this when using this endpoint. -}
+  , schemaGet :: Maybe Text -> m Value{- ^  -}
+  , schemaWebsocketHelp :: m Value{- ^  -}
+  , settlementGet :: Maybe Text -> Maybe Text -> Maybe Text -> Maybe Double -> Maybe Double -> Maybe Bool -> Maybe Integer -> Maybe Integer -> m [Settlement]{- ^  -}
+  , statsGet :: m [Stats]{- ^  -}
+  , statsHistory :: m [StatsHistory]{- ^  -}
+  , statsHistoryUSD :: m [StatsUSD]{- ^  -}
+  , tradeGet :: Maybe Text -> Maybe Text -> Maybe Text -> Maybe Double -> Maybe Double -> Maybe Bool -> Maybe Integer -> Maybe Integer -> m [Trade]{- ^ Please note that indices (symbols starting with `.`) post trades at intervals to the trade feed. These have a `size` of 0 and are used only to indicate a changing price.  See [the FIX Spec](http://www.onixs.biz/fix-dictionary/5.0.SP2/msgType_AE_6569.html) for explanations of these fields. -}
+  , tradeGetBucketed :: Maybe Text -> Maybe Bool -> Maybe Text -> Maybe Text -> Maybe Text -> Maybe Double -> Maybe Double -> Maybe Bool -> Maybe Integer -> Maybe Integer -> m [TradeBin]{- ^ Timestamps returned by our bucketed endpoints are the **end** of the period, indicating when the bucket was written to disk. Some other common systems use the timestamp as the beginning of the period. Please be aware of this when using this endpoint.  Also note the `open` price is equal to the `close` price of the previous timeframe bucket. -}
+  , userCancelWithdrawal :: FormUserCancelWithdrawal -> m Transaction{- ^  -}
+  , userCheckReferralCode :: Maybe Text -> m Double{- ^ If the code is valid, responds with the referral code's discount (e.g. `0.1` for 10%). Otherwise, will return a 404 or 451 if invalid. -}
+  , userCommunicationToken :: FormUserCommunicationToken -> m [CommunicationToken]{- ^  -}
+  , userConfirm :: FormUserConfirm -> m AccessToken{- ^  -}
+  , userConfirmWithdrawal :: FormUserConfirmWithdrawal -> m Transaction{- ^  -}
+  , userGet :: m User{- ^  -}
+  , userGetAffiliateStatus :: m Affiliate{- ^  -}
+  , userGetCommission :: m UserCommissionsBySymbol{- ^  -}
+  , userGetDepositAddress :: Maybe Text -> m Text{- ^  -}
+  , userGetExecutionHistory :: Maybe Text -> Maybe Integer -> m Value{- ^  -}
+  , userGetMargin :: Maybe Text -> m Margin{- ^  -}
+  , userGetWallet :: Maybe Text -> m Wallet{- ^  -}
+  , userGetWalletHistory :: Maybe Text -> Maybe Double -> Maybe Double -> m [Transaction]{- ^  -}
+  , userGetWalletSummary :: Maybe Text -> m [Transaction]{- ^  -}
+  , userLogout :: m (){- ^  -}
+  , userMinWithdrawalFee :: Maybe Text -> m Value{- ^ This is changed based on network conditions to ensure timely withdrawals. During network congestion, this may be high. The fee is returned in the same currency. -}
+  , userRequestWithdrawal :: FormUserRequestWithdrawal -> m Transaction{- ^ This will send a confirmation email to the email address on record. -}
+  , userSavePreferences :: FormUserSavePreferences -> m User{- ^  -}
+  , userEventGet :: Maybe Double -> Maybe Double -> m [UserEvent]{- ^  -}
   }
 
 newtype BitMEXClient a = BitMEXClient
@@ -632,75 +632,75 @@ instance MonadIO BitMEXClient where
 createBitMEXClient :: BitMEXBackend BitMEXClient
 createBitMEXClient = BitMEXBackend{..}
   where
-    ((coerce -> aPIKey.disable) :<|>
-     (coerce -> aPIKey.enable) :<|>
-     (coerce -> aPIKey.get) :<|>
-     (coerce -> aPIKey.new) :<|>
-     (coerce -> aPIKey.remove) :<|>
-     (coerce -> announcement.get) :<|>
-     (coerce -> announcement.getUrgent) :<|>
-     (coerce -> chat.get) :<|>
-     (coerce -> chat.getChannels) :<|>
-     (coerce -> chat.getConnected) :<|>
-     (coerce -> chat.new) :<|>
-     (coerce -> execution.get) :<|>
-     (coerce -> execution.getTradeHistory) :<|>
-     (coerce -> funding.get) :<|>
-     (coerce -> globalNotification.get) :<|>
-     (coerce -> instrument.get) :<|>
-     (coerce -> instrument.getActive) :<|>
-     (coerce -> instrument.getActiveAndIndices) :<|>
-     (coerce -> instrument.getActiveIntervals) :<|>
-     (coerce -> instrument.getCompositeIndex) :<|>
-     (coerce -> instrument.getIndices) :<|>
-     (coerce -> insurance.get) :<|>
-     (coerce -> leaderboard.get) :<|>
-     (coerce -> leaderboard.getName) :<|>
-     (coerce -> liquidation.get) :<|>
-     (coerce -> order.amend) :<|>
-     (coerce -> order.amendBulk) :<|>
-     (coerce -> order.cancel) :<|>
-     (coerce -> order.cancelAll) :<|>
-     (coerce -> order.cancelAllAfter) :<|>
-     (coerce -> order.closePosition) :<|>
-     (coerce -> order.getOrders) :<|>
-     (coerce -> order.new) :<|>
-     (coerce -> order.newBulk) :<|>
-     (coerce -> orderBook.getL2) :<|>
-     (coerce -> position.get) :<|>
-     (coerce -> position.isolateMargin) :<|>
-     (coerce -> position.transferIsolatedMargin) :<|>
-     (coerce -> position.updateLeverage) :<|>
-     (coerce -> position.updateRiskLimit) :<|>
-     (coerce -> quote.get) :<|>
-     (coerce -> quote.getBucketed) :<|>
-     (coerce -> schema.get) :<|>
-     (coerce -> schema.websocketHelp) :<|>
-     (coerce -> settlement.get) :<|>
-     (coerce -> stats.get) :<|>
-     (coerce -> stats.history) :<|>
-     (coerce -> stats.historyUSD) :<|>
-     (coerce -> trade.get) :<|>
-     (coerce -> trade.getBucketed) :<|>
-     (coerce -> user.cancelWithdrawal) :<|>
-     (coerce -> user.checkReferralCode) :<|>
-     (coerce -> user.communicationToken) :<|>
-     (coerce -> user.confirm) :<|>
-     (coerce -> user.confirmWithdrawal) :<|>
-     (coerce -> user.get) :<|>
-     (coerce -> user.getAffiliateStatus) :<|>
-     (coerce -> user.getCommission) :<|>
-     (coerce -> user.getDepositAddress) :<|>
-     (coerce -> user.getExecutionHistory) :<|>
-     (coerce -> user.getMargin) :<|>
-     (coerce -> user.getWallet) :<|>
-     (coerce -> user.getWalletHistory) :<|>
-     (coerce -> user.getWalletSummary) :<|>
-     (coerce -> user.logout) :<|>
-     (coerce -> user.minWithdrawalFee) :<|>
-     (coerce -> user.requestWithdrawal) :<|>
-     (coerce -> user.savePreferences) :<|>
-     (coerce -> userEvent.get)) = client (Proxy :: Proxy BitMEXAPI)
+    ((coerce -> aPIKeyDisable) :<|>
+     (coerce -> aPIKeyEnable) :<|>
+     (coerce -> aPIKeyGet) :<|>
+     (coerce -> aPIKeyNew) :<|>
+     (coerce -> aPIKeyRemove) :<|>
+     (coerce -> announcementGet) :<|>
+     (coerce -> announcementGetUrgent) :<|>
+     (coerce -> chatGet) :<|>
+     (coerce -> chatGetChannels) :<|>
+     (coerce -> chatGetConnected) :<|>
+     (coerce -> chatNew) :<|>
+     (coerce -> executionGet) :<|>
+     (coerce -> executionGetTradeHistory) :<|>
+     (coerce -> fundingGet) :<|>
+     (coerce -> globalNotificationGet) :<|>
+     (coerce -> instrumentGet) :<|>
+     (coerce -> instrumentGetActive) :<|>
+     (coerce -> instrumentGetActiveAndIndices) :<|>
+     (coerce -> instrumentGetActiveIntervals) :<|>
+     (coerce -> instrumentGetCompositeIndex) :<|>
+     (coerce -> instrumentGetIndices) :<|>
+     (coerce -> insuranceGet) :<|>
+     (coerce -> leaderboardGet) :<|>
+     (coerce -> leaderboardGetName) :<|>
+     (coerce -> liquidationGet) :<|>
+     (coerce -> orderAmend) :<|>
+     (coerce -> orderAmendBulk) :<|>
+     (coerce -> orderCancel) :<|>
+     (coerce -> orderCancelAll) :<|>
+     (coerce -> orderCancelAllAfter) :<|>
+     (coerce -> orderClosePosition) :<|>
+     (coerce -> orderGetOrders) :<|>
+     (coerce -> orderNew) :<|>
+     (coerce -> orderNewBulk) :<|>
+     (coerce -> orderBookGetL2) :<|>
+     (coerce -> positionGet) :<|>
+     (coerce -> positionIsolateMargin) :<|>
+     (coerce -> positionTransferIsolatedMargin) :<|>
+     (coerce -> positionUpdateLeverage) :<|>
+     (coerce -> positionUpdateRiskLimit) :<|>
+     (coerce -> quoteGet) :<|>
+     (coerce -> quoteGetBucketed) :<|>
+     (coerce -> schemaGet) :<|>
+     (coerce -> schemaWebsocketHelp) :<|>
+     (coerce -> settlementGet) :<|>
+     (coerce -> statsGet) :<|>
+     (coerce -> statsHistory) :<|>
+     (coerce -> statsHistoryUSD) :<|>
+     (coerce -> tradeGet) :<|>
+     (coerce -> tradeGetBucketed) :<|>
+     (coerce -> userCancelWithdrawal) :<|>
+     (coerce -> userCheckReferralCode) :<|>
+     (coerce -> userCommunicationToken) :<|>
+     (coerce -> userConfirm) :<|>
+     (coerce -> userConfirmWithdrawal) :<|>
+     (coerce -> userGet) :<|>
+     (coerce -> userGetAffiliateStatus) :<|>
+     (coerce -> userGetCommission) :<|>
+     (coerce -> userGetDepositAddress) :<|>
+     (coerce -> userGetExecutionHistory) :<|>
+     (coerce -> userGetMargin) :<|>
+     (coerce -> userGetWallet) :<|>
+     (coerce -> userGetWalletHistory) :<|>
+     (coerce -> userGetWalletSummary) :<|>
+     (coerce -> userLogout) :<|>
+     (coerce -> userMinWithdrawalFee) :<|>
+     (coerce -> userRequestWithdrawal) :<|>
+     (coerce -> userSavePreferences) :<|>
+     (coerce -> userEventGet)) = client (Proxy :: Proxy BitMEXAPI)
 
 -- | Run requests in the BitMEXClient monad.
 runBitMEXClient :: ServerConfig -> BitMEXClient a -> ExceptT ServantError IO a
@@ -720,72 +720,72 @@ runBitMEXServer ServerConfig{..} backend =
   where
     warpSettings = Warp.defaultSettings & Warp.setPort configPort & Warp.setHost (fromString configHost)
     serverFromBackend BitMEXBackend{..} =
-      (coerce aPIKey.disable :<|>
-       coerce aPIKey.enable :<|>
-       coerce aPIKey.get :<|>
-       coerce aPIKey.new :<|>
-       coerce aPIKey.remove :<|>
-       coerce announcement.get :<|>
-       coerce announcement.getUrgent :<|>
-       coerce chat.get :<|>
-       coerce chat.getChannels :<|>
-       coerce chat.getConnected :<|>
-       coerce chat.new :<|>
-       coerce execution.get :<|>
-       coerce execution.getTradeHistory :<|>
-       coerce funding.get :<|>
-       coerce globalNotification.get :<|>
-       coerce instrument.get :<|>
-       coerce instrument.getActive :<|>
-       coerce instrument.getActiveAndIndices :<|>
-       coerce instrument.getActiveIntervals :<|>
-       coerce instrument.getCompositeIndex :<|>
-       coerce instrument.getIndices :<|>
-       coerce insurance.get :<|>
-       coerce leaderboard.get :<|>
-       coerce leaderboard.getName :<|>
-       coerce liquidation.get :<|>
-       coerce order.amend :<|>
-       coerce order.amendBulk :<|>
-       coerce order.cancel :<|>
-       coerce order.cancelAll :<|>
-       coerce order.cancelAllAfter :<|>
-       coerce order.closePosition :<|>
-       coerce order.getOrders :<|>
-       coerce order.new :<|>
-       coerce order.newBulk :<|>
-       coerce orderBook.getL2 :<|>
-       coerce position.get :<|>
-       coerce position.isolateMargin :<|>
-       coerce position.transferIsolatedMargin :<|>
-       coerce position.updateLeverage :<|>
-       coerce position.updateRiskLimit :<|>
-       coerce quote.get :<|>
-       coerce quote.getBucketed :<|>
-       coerce schema.get :<|>
-       coerce schema.websocketHelp :<|>
-       coerce settlement.get :<|>
-       coerce stats.get :<|>
-       coerce stats.history :<|>
-       coerce stats.historyUSD :<|>
-       coerce trade.get :<|>
-       coerce trade.getBucketed :<|>
-       coerce user.cancelWithdrawal :<|>
-       coerce user.checkReferralCode :<|>
-       coerce user.communicationToken :<|>
-       coerce user.confirm :<|>
-       coerce user.confirmWithdrawal :<|>
-       coerce user.get :<|>
-       coerce user.getAffiliateStatus :<|>
-       coerce user.getCommission :<|>
-       coerce user.getDepositAddress :<|>
-       coerce user.getExecutionHistory :<|>
-       coerce user.getMargin :<|>
-       coerce user.getWallet :<|>
-       coerce user.getWalletHistory :<|>
-       coerce user.getWalletSummary :<|>
-       coerce user.logout :<|>
-       coerce user.minWithdrawalFee :<|>
-       coerce user.requestWithdrawal :<|>
-       coerce user.savePreferences :<|>
-       coerce userEvent.get)
+      (coerce aPIKeyDisable :<|>
+       coerce aPIKeyEnable :<|>
+       coerce aPIKeyGet :<|>
+       coerce aPIKeyNew :<|>
+       coerce aPIKeyRemove :<|>
+       coerce announcementGet :<|>
+       coerce announcementGetUrgent :<|>
+       coerce chatGet :<|>
+       coerce chatGetChannels :<|>
+       coerce chatGetConnected :<|>
+       coerce chatNew :<|>
+       coerce executionGet :<|>
+       coerce executionGetTradeHistory :<|>
+       coerce fundingGet :<|>
+       coerce globalNotificationGet :<|>
+       coerce instrumentGet :<|>
+       coerce instrumentGetActive :<|>
+       coerce instrumentGetActiveAndIndices :<|>
+       coerce instrumentGetActiveIntervals :<|>
+       coerce instrumentGetCompositeIndex :<|>
+       coerce instrumentGetIndices :<|>
+       coerce insuranceGet :<|>
+       coerce leaderboardGet :<|>
+       coerce leaderboardGetName :<|>
+       coerce liquidationGet :<|>
+       coerce orderAmend :<|>
+       coerce orderAmendBulk :<|>
+       coerce orderCancel :<|>
+       coerce orderCancelAll :<|>
+       coerce orderCancelAllAfter :<|>
+       coerce orderClosePosition :<|>
+       coerce orderGetOrders :<|>
+       coerce orderNew :<|>
+       coerce orderNewBulk :<|>
+       coerce orderBookGetL2 :<|>
+       coerce positionGet :<|>
+       coerce positionIsolateMargin :<|>
+       coerce positionTransferIsolatedMargin :<|>
+       coerce positionUpdateLeverage :<|>
+       coerce positionUpdateRiskLimit :<|>
+       coerce quoteGet :<|>
+       coerce quoteGetBucketed :<|>
+       coerce schemaGet :<|>
+       coerce schemaWebsocketHelp :<|>
+       coerce settlementGet :<|>
+       coerce statsGet :<|>
+       coerce statsHistory :<|>
+       coerce statsHistoryUSD :<|>
+       coerce tradeGet :<|>
+       coerce tradeGetBucketed :<|>
+       coerce userCancelWithdrawal :<|>
+       coerce userCheckReferralCode :<|>
+       coerce userCommunicationToken :<|>
+       coerce userConfirm :<|>
+       coerce userConfirmWithdrawal :<|>
+       coerce userGet :<|>
+       coerce userGetAffiliateStatus :<|>
+       coerce userGetCommission :<|>
+       coerce userGetDepositAddress :<|>
+       coerce userGetExecutionHistory :<|>
+       coerce userGetMargin :<|>
+       coerce userGetWallet :<|>
+       coerce userGetWalletHistory :<|>
+       coerce userGetWalletSummary :<|>
+       coerce userLogout :<|>
+       coerce userMinWithdrawalFee :<|>
+       coerce userRequestWithdrawal :<|>
+       coerce userSavePreferences :<|>
+       coerce userEventGet)
