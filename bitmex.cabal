@@ -1,4 +1,4 @@
-name:                bitmex
+name:                bitmex-servant
 version:             0.1.0.0
 synopsis:            Auto-generated API bindings for bitmex
 description:         Auto-generated API bindings for bitmex.
