@@ -62,13 +62,13 @@ jobs:
 
 workflows:
   version: 2
-  test:
+  build:
     jobs:
       - test
-  build:
-   filters:
-     branches:
-       only:
-         - build
-    jobs:
-      - build
+      - build:
+          requires:
+            - test
+          filters:
+            branches:
+              only: build
+
