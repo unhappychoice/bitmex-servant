@@ -1,8 +1,9 @@
 name:                bitmex
 version:             0.1.0.0
 synopsis:            Auto-generated API bindings for bitmex
-description:         Please see README.md
+description:         Auto-generated API bindings for bitmex.
 license:             MIT
+license-file:        LICENSE
 homepage:            https://github.com/unhappychoice/bitmex-servant
 author:              unhappychoice
 maintainer:          unhappychoice@gmail.com
@@ -16,19 +17,18 @@ library
   exposed-modules:     BitMEX.API
                      , BitMEX.Types
   ghc-options:         -Wall
-  build-depends:       base
-                     , aeson
-                     , text
-                     , containers
-                     , network-uri
-                     , servant
-                     , http-api-data
-                     , servant-client
-                     , servant-server
-                     , servant
-                     , warp
-                     , transformers
-                     , mtl
-                     , http-client
-                     , http-types
+  build-depends:       base < 5.0.0
+                     , aeson < 2.0.0
+                     , text < 2.0.0
+                     , containers < 0.6.0
+                     , network-uri < 3.0.0
+                     , servant == 0.8.1
+                     , servant-client == 0.8.1
+                     , servant-server == 0.8.1
+                     , http-api-data == 0.2.4
+                     , warp < 4
+                     , transformers < 1.0.0
+                     , mtl < 3.0.0
+                     , http-client < 1.0.0
+                     , http-types < 1.0.0
   default-language:    Haskell2010
