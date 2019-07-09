@@ -1,0 +1,54 @@
+version: 2
+
+configure_git: &configure_git
+  run:
+    name: configure git
+    command: |
+      git config user.email "unhappychoice+circlecibot@gmail.com"
+      git config user.name "unhappychoice bot"
+
+wait_swagger_codegen_service: &wait_swagger_codegen_service
+  run:
+    name: wait for db
+    command: dockerize -wait tcp://127.0.0.1:8080 -timeout 1m
+
+generate_client: &generate_client
+  run:
+    name: generate client
+    command: |
+      RESULT=$(curl -X POST --header 'Content-Type: application/json' --header 'Accept: application/json' -d '{"swaggerUrl":"https://www.bitmex.com/api/explorer/swagger.json"}' 'http://localhost:8080/api/gen/servers/haskell' | jq '.link' | tr -d '"')
+      curl $RESULT > build/result.zip
+      unzip -jo build/result.zip
+
+create_pr: &create_pr
+  run:
+    name: create pull request
+    command: |
+      git add .
+      git commit -m "Auto generated commit by CircleCI Job"
+      git push --set-upstream origin $(date +%F)
+      curl -H "Authorization: token ${GITHUB_TOKEN}" -X POST -d "{\"title\":\"Update PR $(date +%F)\",\"base\":\"master\", \"head\":\"$(date +%F)\"}" https://api.github.com/repos/unhappychoice/bitmex-servant/pulls
+
+jobs:
+  build:
+    working_directory: ~/bitmex-servant
+    docker:
+      - image: circleci/buildpack-deps:buster
+      - image: swaggerapi/swagger-generator
+    steps:
+      - checkout
+      - *configure_git
+      - run:
+          name: checkout branch
+          command: |
+            git pull origin $(date +%F) || true
+            git checkout -b $(date +%F)
+      - *wait_swagger_codegen_service
+      - *generate_client
+      - *create_pr
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - build
