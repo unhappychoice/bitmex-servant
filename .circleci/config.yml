@@ -30,6 +30,17 @@ create_pr: &create_pr
       curl -H "Authorization: token ${GITHUB_TOKEN}" -X POST -d "{\"title\":\"Update PR $(date +%F)\",\"base\":\"master\", \"head\":\"$(date +%F)\"}" https://api.github.com/repos/unhappychoice/bitmex-servant/pulls
 
 jobs:
+  test:
+    working_directory: ~/bitmex-servant
+    docker:
+      - image: circleci/buildpack-deps:buster
+      - image: swaggerapi/swagger-generator
+    steps:
+      - checkout
+      - run:
+          name: test
+          command: echo true
+
   build:
     working_directory: ~/bitmex-servant
     docker:
@@ -50,5 +61,15 @@ jobs:
 workflows:
   version: 2
   test:
+    jobs:
+      - test
+  nightly:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - master
     jobs:
       - build
