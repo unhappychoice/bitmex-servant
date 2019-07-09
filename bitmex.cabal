@@ -2,6 +2,7 @@ name:                bitmex
 version:             0.1.0.0
 synopsis:            Auto-generated API bindings for bitmex
 description:         Please see README.md
+license:             MIT
 homepage:            https://github.com/unhappychoice/bitmex-servant
 author:              unhappychoice
 maintainer:          unhappychoice@gmail.com
