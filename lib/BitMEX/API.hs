@@ -16,6 +16,7 @@ module BitMEX.API
   -- * Client and Server
   ( ServerConfig(..)
   , BitMEXBackend
+  , BitMEXBackend(..)
   , createBitMEXClient
   , runBitMEXServer
   , runBitMEXClient
