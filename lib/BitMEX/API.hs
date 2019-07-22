@@ -22,6 +22,7 @@ module BitMEX.API
   , runBitMEXClient
   , runBitMEXClientWithManager
   , BitMEXClient
+  , BitMEXClient(..)
   -- ** Servant
   , BitMEXAPI
   ) where
